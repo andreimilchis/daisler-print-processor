@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import { EditorProvider } from "@/lib/editor-context";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -21,8 +22,10 @@ export default function RootLayout({
   return (
     <html lang="ro" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <Header />
-        <main className="flex-1 flex flex-col">{children}</main>
+        <EditorProvider>
+          <Header />
+          <main className="flex-1 flex flex-col">{children}</main>
+        </EditorProvider>
       </body>
     </html>
   );

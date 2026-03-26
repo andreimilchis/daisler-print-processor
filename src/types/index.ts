@@ -1,0 +1,47 @@
+export interface FileData {
+  name: string;
+  size: number;
+  type: string;
+  width: number;
+  height: number;
+  previewUrl: string;
+  file: File;
+}
+
+export interface CropArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface FormatPreset {
+  id: string;
+  name: string;
+  widthMm: number;
+  heightMm: number;
+  defaultBleedMm: number;
+  defaultDpi: number;
+}
+
+export type Unit = "mm" | "cm" | "px";
+
+export interface ProcessingParams {
+  unit: Unit;
+  dpi: number;
+  bleedMm: number;
+  targetWidthMm: number;
+  targetHeightMm: number;
+  crop?: CropArea;
+  presetId?: string;
+}
+
+export interface EditorState {
+  fileData: FileData | null;
+  params: ProcessingParams;
+  cropArea?: CropArea;
+  cropMode: boolean;
+  processing: boolean;
+  pdfUrl: string | null;
+  error: string | null;
+}
