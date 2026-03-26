@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditor } from "@/lib/editor-context";
+import ProgressBar from "./ProgressBar";
 
 export default function ProcessButton() {
   const {
@@ -25,9 +26,14 @@ export default function ProcessButton() {
 
     setProcessing(true);
     setError(null);
-    setAiProgress(params.enableAiFill || params.enableAiUpscaling || params.removeBg ? "Pregătire..." : null);
+
+    const hasAi = params.enableAiFill || params.enableAiUpscaling || params.removeBg;
+    if (hasAi) setAiProgress("Pregătire...");
 
     try {
+      // Simulate step progress for AI operations
+      if (params.removeBg) setAiProgress("Eliminare fundal...");
+
       const formData = new FormData();
       formData.append("file", fileData.file);
       formData.append(
@@ -59,6 +65,7 @@ export default function ProcessButton() {
         throw new Error(data.error || "Eroare la procesare");
       }
 
+      setAiProgress("Finalizare PDF...");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
@@ -83,8 +90,11 @@ export default function ProcessButton() {
       <div className="flex flex-col gap-3">
         <button
           onClick={handleDownload}
-          className="w-full py-3 px-4 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl transition-colors cursor-pointer"
+          className="w-full py-3 px-4 bg-primary hover:bg-primary-dark text-white font-medium rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
         >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
           Descarcă PDF
         </button>
         <button
@@ -104,7 +114,7 @@ export default function ProcessButton() {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <button
         onClick={handleProcess}
         disabled={!canProcess || processing}
@@ -123,14 +133,25 @@ export default function ProcessButton() {
           "Generează PDF"
         )}
       </button>
+
+      {/* Progress bar during processing */}
+      {processing && <ProgressBar />}
+
       {!canProcess && !processing && (
         <p className="text-xs text-muted text-center">
-          Selectează un format pentru a genera PDF
+          Selectează un format sau o rețetă
         </p>
       )}
+
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs">
-          {error}
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-start gap-2">
+          <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <div>
+            <p className="font-medium mb-0.5">Eroare procesare</p>
+            <p>{error}</p>
+          </div>
         </div>
       )}
     </div>

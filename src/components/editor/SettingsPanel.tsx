@@ -19,7 +19,7 @@ export default function SettingsPanel() {
   const { params, updateParams, cropMode, setCropMode } = useEditor();
 
   return (
-    <aside className="w-80 bg-card border-r border-border p-5 flex flex-col gap-6 overflow-y-auto">
+    <aside className="w-full md:w-80 h-full bg-card border-r border-border p-5 flex flex-col gap-6 overflow-y-auto">
       <h2 className="font-bold text-lg text-foreground">Parametri</h2>
 
       {/* Unitate */}

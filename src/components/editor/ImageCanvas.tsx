@@ -2,11 +2,34 @@
 
 import { useEditor } from "@/lib/editor-context";
 import CropTool from "./CropTool";
+import PdfPreview from "./PdfPreview";
 
 export default function ImageCanvas() {
-  const { fileData, cropMode, params } = useEditor();
+  const { fileData, cropMode, params, pdfUrl, processing } = useEditor();
 
   if (!fileData) return null;
+
+  // Show PDF preview after processing
+  if (pdfUrl) {
+    return <PdfPreview />;
+  }
+
+  // Processing overlay
+  if (processing) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-background">
+        <div className="text-center p-12">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+          <p className="font-medium text-foreground text-lg">Se procesează...</p>
+          <p className="text-muted text-sm mt-2">
+            {params.enableAiUpscaling || params.enableAiFill || params.removeBg
+              ? "Operațiunile AI pot dura 15-60 secunde"
+              : "De obicei durează câteva secunde"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (fileData.type === "application/pdf") {
     return (
@@ -36,19 +59,37 @@ export default function ImageCanvas() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-background p-6 overflow-auto">
+    <div className="flex-1 flex items-center justify-center bg-background p-4 md:p-6 overflow-auto">
       <div className="relative inline-block">
         <img
           src={fileData.previewUrl}
           alt={fileData.name}
-          className="max-h-[70vh] max-w-full object-contain rounded-lg shadow-md"
+          className="max-h-[50vh] md:max-h-[70vh] max-w-full object-contain rounded-lg shadow-md"
         />
+        {/* Bleed overlay */}
         {params.bleedMm > 0 && params.targetWidthMm > 0 && (
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0 border-2 border-dashed border-red-400 rounded-lg" />
             <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-red-500 bg-white px-2 rounded">
               bleed {params.bleedMm}mm
             </span>
+          </div>
+        )}
+        {/* CutContour overlay */}
+        {params.cutContourEnabled && params.targetWidthMm > 0 && (
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-[-4px] border-2 border-green-500 rounded-lg"
+              style={params.cutContourType === "shape" ? { borderRadius: "20%" } : {}}
+            />
+            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-green-600 bg-white px-2 rounded">
+              CutContour {params.cutContourOffsetMm || 2}mm
+            </span>
+          </div>
+        )}
+        {/* Remove BG indicator */}
+        {params.removeBg && (
+          <div className="absolute top-2 right-2 px-2 py-1 bg-purple-600 text-white text-xs rounded-lg">
+            No BG
           </div>
         )}
         <div className="mt-3 text-center text-xs text-muted">
