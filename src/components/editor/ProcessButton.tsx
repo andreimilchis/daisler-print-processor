@@ -10,9 +10,11 @@ export default function ProcessButton() {
     processing,
     pdfUrl,
     error,
+    aiProgress,
     setProcessing,
     setPdfUrl,
     setError,
+    setAiProgress,
     reset,
   } = useEditor();
 
@@ -23,6 +25,7 @@ export default function ProcessButton() {
 
     setProcessing(true);
     setError(null);
+    setAiProgress(params.enableAiFill || params.enableAiUpscaling ? "Pregătire..." : null);
 
     try {
       const formData = new FormData();
@@ -35,6 +38,10 @@ export default function ProcessButton() {
           dpi: params.dpi,
           bleedMm: params.bleedMm,
           crop: cropArea || undefined,
+          enableAiFill: params.enableAiFill,
+          aiOverlapPercent: params.aiOverlapPercent,
+          enableAiUpscaling: params.enableAiUpscaling,
+          aiUpscaleScale: params.aiUpscaleScale,
         })
       );
 
@@ -55,6 +62,7 @@ export default function ProcessButton() {
       setError(err instanceof Error ? err.message : "Eroare necunoscută");
     } finally {
       setProcessing(false);
+      setAiProgress(null);
     }
   };
 
@@ -105,7 +113,7 @@ export default function ProcessButton() {
         {processing ? (
           <span className="flex items-center justify-center gap-2">
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Se procesează...
+            {aiProgress || "Se procesează..."}
           </span>
         ) : (
           "Generează PDF"

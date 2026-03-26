@@ -3,6 +3,8 @@
 import { useEditor } from "@/lib/editor-context";
 import { Unit } from "@/types";
 import FormatPresets from "./FormatPresets";
+import DpiWarning from "./DpiWarning";
+import AiSettings from "./AiSettings";
 import ProcessButton from "./ProcessButton";
 
 const UNITS: { value: Unit; label: string }[] = [
@@ -120,6 +122,12 @@ export default function SettingsPanel() {
           </div>
         </div>
       )}
+
+      {/* DPI Warning */}
+      <DpiWarning />
+
+      {/* AI Features */}
+      <AiSettings />
 
       {/* Crop toggle */}
       <div>

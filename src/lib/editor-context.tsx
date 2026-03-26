@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { FileData, ProcessingParams, CropArea, EditorState } from "@/types";
+import { FileData, ProcessingParams, CropArea, DpiCheckResult, EditorState } from "@/types";
 import { DEFAULT_PARAMS } from "@/lib/constants";
 
 interface EditorContextType extends EditorState {
@@ -12,6 +12,8 @@ interface EditorContextType extends EditorState {
   setProcessing: (on: boolean) => void;
   setPdfUrl: (url: string | null) => void;
   setError: (err: string | null) => void;
+  setDpiCheck: (result: DpiCheckResult | null) => void;
+  setAiProgress: (step: string | null) => void;
   reset: () => void;
 }
 
@@ -26,10 +28,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     processing: false,
     pdfUrl: null,
     error: null,
+    dpiCheck: null,
+    aiProgress: null,
   });
 
   const setFileData = useCallback((data: FileData) => {
-    setState((s) => ({ ...s, fileData: data, pdfUrl: null, error: null }));
+    setState((s) => ({ ...s, fileData: data, pdfUrl: null, error: null, dpiCheck: null }));
   }, []);
 
   const updateParams = useCallback((updates: Partial<ProcessingParams>) => {
@@ -60,6 +64,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, error: err }));
   }, []);
 
+  const setDpiCheck = useCallback((result: DpiCheckResult | null) => {
+    setState((s) => ({ ...s, dpiCheck: result }));
+  }, []);
+
+  const setAiProgress = useCallback((step: string | null) => {
+    setState((s) => ({ ...s, aiProgress: step }));
+  }, []);
+
   const reset = useCallback(() => {
     if (state.fileData?.previewUrl) URL.revokeObjectURL(state.fileData.previewUrl);
     if (state.pdfUrl) URL.revokeObjectURL(state.pdfUrl);
@@ -71,6 +83,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       processing: false,
       pdfUrl: null,
       error: null,
+      dpiCheck: null,
+      aiProgress: null,
     });
   }, [state.fileData, state.pdfUrl]);
 
@@ -85,6 +99,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         setProcessing,
         setPdfUrl,
         setError,
+        setDpiCheck,
+        setAiProgress,
         reset,
       }}
     >

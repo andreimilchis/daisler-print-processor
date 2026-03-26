@@ -1,9 +1,12 @@
 import sharp from "sharp";
 import { CropArea } from "@/types";
+import { mmToPx } from "@/lib/units";
 import { resizeToFormat } from "./resize";
 import { addMirrorBleed } from "./mirror-bleed";
 import { convertToCmykJpeg } from "./cmyk";
 import { generatePdf } from "./pdf-export";
+import { outpaintImage } from "@/lib/ai/outpaint";
+import { upscaleImage } from "@/lib/ai/upscale";
 
 interface PipelineParams {
   targetWidthMm: number;
@@ -11,6 +14,10 @@ interface PipelineParams {
   dpi: number;
   bleedMm: number;
   crop?: CropArea;
+  enableAiFill?: boolean;
+  aiOverlapPercent?: number;
+  enableAiUpscaling?: boolean;
+  aiUpscaleScale?: 2 | 4;
 }
 
 export async function processFile(
@@ -32,16 +39,28 @@ export async function processFile(
       .toBuffer();
   }
 
-  // Step 2: Resize to target format
+  // Step 2: AI Image Filler (outpainting) - before resize
+  if (params.enableAiFill) {
+    const targetWidthPx = mmToPx(params.targetWidthMm, params.dpi);
+    const targetHeightPx = mmToPx(params.targetHeightMm, params.dpi);
+    img = await outpaintImage(img, targetWidthPx, targetHeightPx, params.aiOverlapPercent || 5);
+  }
+
+  // Step 3: Resize to target format
   img = await resizeToFormat(img, params.targetWidthMm, params.targetHeightMm, params.dpi);
 
-  // Step 3: Mirror bleed
+  // Step 4: AI Upscaling - after resize
+  if (params.enableAiUpscaling) {
+    img = await upscaleImage(img, params.aiUpscaleScale || 2);
+  }
+
+  // Step 5: Mirror bleed
   img = await addMirrorBleed(img, params.bleedMm, params.dpi);
 
-  // Step 4: Convert to CMYK JPEG
+  // Step 6: Convert to CMYK JPEG
   const cmykJpeg = await convertToCmykJpeg(img);
 
-  // Step 5: Generate PDF with trim marks
+  // Step 7: Generate PDF with trim marks
   const pdf = await generatePdf(
     cmykJpeg,
     params.targetWidthMm,

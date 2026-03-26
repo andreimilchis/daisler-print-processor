@@ -34,6 +34,18 @@ export interface ProcessingParams {
   targetHeightMm: number;
   crop?: CropArea;
   presetId?: string;
+  enableAiFill?: boolean;
+  aiOverlapPercent?: number;
+  enableAiUpscaling?: boolean;
+  aiUpscaleScale?: 2 | 4;
+}
+
+export interface DpiCheckResult {
+  effectiveDpiW: number;
+  effectiveDpiH: number;
+  effectiveDpi: number;
+  level: "good" | "warning" | "bad";
+  recommendation: string;
 }
 
 export interface EditorState {
@@ -44,4 +56,6 @@ export interface EditorState {
   processing: boolean;
   pdfUrl: string | null;
   error: string | null;
+  dpiCheck: DpiCheckResult | null;
+  aiProgress: string | null;
 }
