@@ -2,6 +2,7 @@
 
 import { useEditor } from "@/lib/editor-context";
 import ProgressBar from "./ProgressBar";
+import ShareButton from "./ShareButton";
 
 export default function ProcessButton() {
   const {
@@ -21,19 +22,44 @@ export default function ProcessButton() {
 
   const canProcess = fileData && params.targetWidthMm > 0 && params.targetHeightMm > 0 && params.dpi >= 72;
 
+  const logToHistory = async (status: string, processingTimeMs: number, errorMessage?: string) => {
+    if (!fileData) return;
+    try {
+      await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: fileData.name,
+          fileType: fileData.type,
+          fileSize: fileData.size,
+          params: {
+            targetWidthMm: params.targetWidthMm,
+            targetHeightMm: params.targetHeightMm,
+            dpi: params.dpi,
+            bleedMm: params.bleedMm,
+          },
+          status,
+          errorMessage,
+          processingTimeMs,
+        }),
+      });
+    } catch {
+      // Silent fail - logging shouldn't block the user
+    }
+  };
+
   const handleProcess = async () => {
     if (!fileData || !canProcess) return;
 
     setProcessing(true);
     setError(null);
+    const startTime = Date.now();
 
     const hasAi = params.enableAiFill || params.enableAiUpscaling || params.removeBg;
     if (hasAi) setAiProgress("Pregătire...");
+    if (params.removeBg) setAiProgress("Eliminare fundal...");
 
     try {
-      // Simulate step progress for AI operations
-      if (params.removeBg) setAiProgress("Eliminare fundal...");
-
       const formData = new FormData();
       formData.append("file", fileData.file);
       formData.append(
@@ -69,8 +95,13 @@ export default function ProcessButton() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
+
+      // Log success
+      logToHistory("completed", Date.now() - startTime);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Eroare necunoscută");
+      const message = err instanceof Error ? err.message : "Eroare necunoscută";
+      setError(message);
+      logToHistory("error", Date.now() - startTime, message);
     } finally {
       setProcessing(false);
       setAiProgress(null);
@@ -97,6 +128,10 @@ export default function ProcessButton() {
           </svg>
           Descarcă PDF
         </button>
+
+        {/* Share with client */}
+        <ShareButton />
+
         <button
           onClick={() => setPdfUrl(null)}
           className="w-full py-2 px-4 bg-background border border-border text-foreground text-sm rounded-xl hover:bg-primary/5 cursor-pointer"
@@ -134,7 +169,6 @@ export default function ProcessButton() {
         )}
       </button>
 
-      {/* Progress bar during processing */}
       {processing && <ProgressBar />}
 
       {!canProcess && !processing && (
