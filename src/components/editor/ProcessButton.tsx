@@ -25,7 +25,7 @@ export default function ProcessButton() {
 
     setProcessing(true);
     setError(null);
-    setAiProgress(params.enableAiFill || params.enableAiUpscaling ? "Pregătire..." : null);
+    setAiProgress(params.enableAiFill || params.enableAiUpscaling || params.removeBg ? "Pregătire..." : null);
 
     try {
       const formData = new FormData();
@@ -42,6 +42,10 @@ export default function ProcessButton() {
           aiOverlapPercent: params.aiOverlapPercent,
           enableAiUpscaling: params.enableAiUpscaling,
           aiUpscaleScale: params.aiUpscaleScale,
+          cutContourEnabled: params.cutContourEnabled,
+          cutContourType: params.cutContourType,
+          cutContourOffsetMm: params.cutContourOffsetMm,
+          removeBg: params.removeBg,
         })
       );
 

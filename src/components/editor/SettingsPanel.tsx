@@ -2,9 +2,11 @@
 
 import { useEditor } from "@/lib/editor-context";
 import { Unit } from "@/types";
-import FormatPresets from "./FormatPresets";
+import RecipeSelector from "./RecipeSelector";
 import DpiWarning from "./DpiWarning";
 import AiSettings from "./AiSettings";
+import CutContourSettings from "./CutContourSettings";
+import BackgroundRemoveToggle from "./BackgroundRemoveToggle";
 import ProcessButton from "./ProcessButton";
 
 const UNITS: { value: Unit; label: string }[] = [
@@ -92,8 +94,8 @@ export default function SettingsPanel() {
         <p className="text-xs text-muted mt-1">Extensie mirror pe margini</p>
       </div>
 
-      {/* Format presets */}
-      <FormatPresets />
+      {/* Rețete (include format presets + setări avansate) */}
+      <RecipeSelector />
 
       {/* Custom dimensions */}
       {!params.presetId && (
@@ -128,6 +130,12 @@ export default function SettingsPanel() {
 
       {/* AI Features */}
       <AiSettings />
+
+      {/* Background Remove */}
+      <BackgroundRemoveToggle />
+
+      {/* CutContour */}
+      <CutContourSettings />
 
       {/* Crop toggle */}
       <div>

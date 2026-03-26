@@ -38,6 +38,10 @@ export interface ProcessingParams {
   aiOverlapPercent?: number;
   enableAiUpscaling?: boolean;
   aiUpscaleScale?: 2 | 4;
+  cutContourEnabled?: boolean;
+  cutContourType?: "rectangle" | "shape";
+  cutContourOffsetMm?: number;
+  removeBg?: boolean;
 }
 
 export interface DpiCheckResult {
