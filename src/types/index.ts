@@ -59,6 +59,7 @@ export interface EditorState {
   cropMode: boolean;
   processing: boolean;
   pdfUrl: string | null;
+  mockupUrl: string | null;
   error: string | null;
   dpiCheck: DpiCheckResult | null;
   aiProgress: string | null;

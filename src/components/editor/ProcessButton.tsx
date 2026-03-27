@@ -15,6 +15,7 @@ export default function ProcessButton() {
     aiProgress,
     setProcessing,
     setPdfUrl,
+    setMockupUrl,
     setError,
     setAiProgress,
     reset,
@@ -95,6 +96,22 @@ export default function ProcessButton() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
+
+      // Generate mockup in background (non-blocking)
+      if (params.presetId && fileData) {
+        setMockupUrl(null);
+        const mockupForm = new FormData();
+        mockupForm.append("file", fileData.file);
+        mockupForm.append("presetId", params.presetId);
+        mockupForm.append("targetWidthMm", String(params.targetWidthMm));
+        mockupForm.append("targetHeightMm", String(params.targetHeightMm));
+        fetch("/api/mockup", { method: "POST", body: mockupForm })
+          .then((r) => r.ok ? r.blob() : null)
+          .then((blob) => {
+            if (blob) setMockupUrl(URL.createObjectURL(blob));
+          })
+          .catch(() => {}); // Silent fail - mockup is optional
+      }
 
       // Log success
       logToHistory("completed", Date.now() - startTime);

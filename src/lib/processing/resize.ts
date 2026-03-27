@@ -11,6 +11,6 @@ export async function resizeToFormat(
   const heightPx = mmToPx(targetHeightMm, dpi);
 
   return sharp(buffer)
-    .resize(widthPx, heightPx, { fit: "fill" })
+    .resize(widthPx, heightPx, { fit: "cover" })
     .toBuffer();
 }

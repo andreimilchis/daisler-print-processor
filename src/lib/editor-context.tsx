@@ -11,6 +11,7 @@ interface EditorContextType extends EditorState {
   setCropMode: (on: boolean) => void;
   setProcessing: (on: boolean) => void;
   setPdfUrl: (url: string | null) => void;
+  setMockupUrl: (url: string | null) => void;
   setError: (err: string | null) => void;
   setDpiCheck: (result: DpiCheckResult | null) => void;
   setAiProgress: (step: string | null) => void;
@@ -27,13 +28,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     cropMode: false,
     processing: false,
     pdfUrl: null,
+    mockupUrl: null,
     error: null,
     dpiCheck: null,
     aiProgress: null,
   });
 
   const setFileData = useCallback((data: FileData) => {
-    setState((s) => ({ ...s, fileData: data, pdfUrl: null, error: null, dpiCheck: null }));
+    setState((s) => ({ ...s, fileData: data, pdfUrl: null, mockupUrl: null, error: null, dpiCheck: null }));
   }, []);
 
   const updateParams = useCallback((updates: Partial<ProcessingParams>) => {
@@ -41,6 +43,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       ...s,
       params: { ...s.params, ...updates },
       pdfUrl: null,
+      mockupUrl: null,
     }));
   }, []);
 
@@ -60,6 +63,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, pdfUrl: url }));
   }, []);
 
+  const setMockupUrl = useCallback((url: string | null) => {
+    setState((s) => ({ ...s, mockupUrl: url }));
+  }, []);
+
   const setError = useCallback((err: string | null) => {
     setState((s) => ({ ...s, error: err }));
   }, []);
@@ -75,6 +82,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => {
     if (state.fileData?.previewUrl) URL.revokeObjectURL(state.fileData.previewUrl);
     if (state.pdfUrl) URL.revokeObjectURL(state.pdfUrl);
+    if (state.mockupUrl) URL.revokeObjectURL(state.mockupUrl);
     setState({
       fileData: null,
       params: { ...DEFAULT_PARAMS },
@@ -82,11 +90,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       cropMode: false,
       processing: false,
       pdfUrl: null,
+      mockupUrl: null,
       error: null,
       dpiCheck: null,
       aiProgress: null,
     });
-  }, [state.fileData, state.pdfUrl]);
+  }, [state.fileData, state.pdfUrl, state.mockupUrl]);
 
   return (
     <EditorContext.Provider
@@ -98,6 +107,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         setCropMode,
         setProcessing,
         setPdfUrl,
+        setMockupUrl,
         setError,
         setDpiCheck,
         setAiProgress,

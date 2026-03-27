@@ -1,17 +1,51 @@
 "use client";
 
+import { useState } from "react";
 import { useEditor } from "@/lib/editor-context";
 import CropTool from "./CropTool";
 import PdfPreview from "./PdfPreview";
+import MockupPreview from "./MockupPreview";
 
 export default function ImageCanvas() {
-  const { fileData, cropMode, params, pdfUrl, processing } = useEditor();
+  const { fileData, cropMode, params, pdfUrl, mockupUrl, processing } = useEditor();
+  const [activeTab, setActiveTab] = useState<"pdf" | "mockup">("mockup");
 
   if (!fileData) return null;
 
-  // Show PDF preview after processing
+  // Show PDF/Mockup preview after processing
   if (pdfUrl) {
-    return <PdfPreview />;
+    const hasMockup = params.presetId != null;
+    return (
+      <div className="flex-1 flex flex-col">
+        {/* Tab bar */}
+        {hasMockup && (
+          <div className="flex border-b border-border bg-card">
+            <button
+              onClick={() => setActiveTab("mockup")}
+              className={`flex-1 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                activeTab === "mockup"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              Previzualizare Produs
+            </button>
+            <button
+              onClick={() => setActiveTab("pdf")}
+              className={`flex-1 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                activeTab === "pdf"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              PDF Print
+            </button>
+          </div>
+        )}
+        {/* Content */}
+        {activeTab === "mockup" && hasMockup ? <MockupPreview /> : <PdfPreview />}
+      </div>
+    );
   }
 
   // Processing overlay
