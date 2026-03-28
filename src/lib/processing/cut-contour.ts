@@ -1,5 +1,5 @@
-import sharp from "sharp";
 import { CutContourParams } from "@/lib/recipes";
+import { detectContour, smoothContour, expandContour } from "./contour-detect";
 
 const MM_TO_POINTS = 2.835;
 
@@ -25,7 +25,6 @@ export async function generateCutContour(
   const heightPt = heightMm * MM_TO_POINTS;
 
   if (contourParams.type === "rectangle") {
-    // Simple rectangle contour with offset outside trim area
     return {
       type: "rectangle",
       x: -offsetPt,
@@ -35,10 +34,45 @@ export async function generateCutContour(
     };
   }
 
-  // Shape contour: detect non-transparent edges of image
-  const meta = await sharp(imageBuffer).metadata();
-  if (!meta.width || !meta.height) {
-    // Fallback to rectangle
+  // Shape contour: use improved contour detection
+  try {
+    const rawPoints = await detectContour(imageBuffer, 360);
+
+    if (rawPoints.length < 10) {
+      // Not enough points, fallback to rectangle
+      return {
+        type: "rectangle",
+        x: -offsetPt,
+        y: -offsetPt,
+        width: widthPt + 2 * offsetPt,
+        height: heightPt + 2 * offsetPt,
+      };
+    }
+
+    // Smooth the contour for cleaner cut lines
+    const smoothed = smoothContour(rawPoints, 5);
+
+    // Expand by offset
+    const offsetNormX = contourParams.offsetMm / widthMm;
+    const offsetNormY = contourParams.offsetMm / heightMm;
+    const expanded = expandContour(smoothed, offsetNormX, offsetNormY);
+
+    // Convert normalized coordinates to PDF points
+    const shapePath = expanded.map((p) => ({
+      x: p.x * widthPt,
+      y: p.y * heightPt,
+    }));
+
+    return {
+      type: "shape",
+      x: 0,
+      y: 0,
+      width: widthPt,
+      height: heightPt,
+      shapePath,
+    };
+  } catch {
+    // Fallback to rectangle on any error
     return {
       type: "rectangle",
       x: -offsetPt,
@@ -47,106 +81,6 @@ export async function generateCutContour(
       height: heightPt + 2 * offsetPt,
     };
   }
-
-  // Extract alpha channel and find bounding contour
-  const { data, info } = await sharp(imageBuffer)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const w = info.width;
-  const h = info.height;
-  const channels = info.channels;
-
-  // Sample contour points by scanning edges
-  const points: { x: number; y: number }[] = [];
-  const step = Math.max(1, Math.floor(Math.min(w, h) / 200)); // ~200 sample points per edge
-
-  // Scan from top
-  for (let x = 0; x < w; x += step) {
-    for (let y = 0; y < h; y++) {
-      const alpha = data[(y * w + x) * channels + 3];
-      if (alpha > 128) {
-        points.push({ x, y });
-        break;
-      }
-    }
-  }
-
-  // Scan from right
-  for (let y = 0; y < h; y += step) {
-    for (let x = w - 1; x >= 0; x--) {
-      const alpha = data[(y * w + x) * channels + 3];
-      if (alpha > 128) {
-        points.push({ x, y });
-        break;
-      }
-    }
-  }
-
-  // Scan from bottom
-  for (let x = w - 1; x >= 0; x -= step) {
-    for (let y = h - 1; y >= 0; y--) {
-      const alpha = data[(y * w + x) * channels + 3];
-      if (alpha > 128) {
-        points.push({ x, y });
-        break;
-      }
-    }
-  }
-
-  // Scan from left
-  for (let y = h - 1; y >= 0; y -= step) {
-    for (let x = 0; x < w; x++) {
-      const alpha = data[(y * w + x) * channels + 3];
-      if (alpha > 128) {
-        points.push({ x, y });
-        break;
-      }
-    }
-  }
-
-  if (points.length < 3) {
-    // Not enough contour points, fallback to rectangle
-    return {
-      type: "rectangle",
-      x: -offsetPt,
-      y: -offsetPt,
-      width: widthPt + 2 * offsetPt,
-      height: heightPt + 2 * offsetPt,
-    };
-  }
-
-  // Convert pixel coordinates to PDF points with offset
-  const scaleX = widthPt / w;
-  const scaleY = heightPt / h;
-  const offsetPxX = contourParams.offsetMm / widthMm * w;
-  const offsetPxY = contourParams.offsetMm / heightMm * h;
-
-  // Apply offset by expanding points outward from center
-  const centerX = w / 2;
-  const centerY = h / 2;
-
-  const shapePath = points.map((p) => {
-    const dx = p.x - centerX;
-    const dy = p.y - centerY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const expandFactor = dist > 0 ? (dist + Math.sqrt(offsetPxX * offsetPxX + offsetPxY * offsetPxY)) / dist : 1;
-
-    return {
-      x: (centerX + dx * expandFactor) * scaleX,
-      y: (centerY + dy * expandFactor) * scaleY,
-    };
-  });
-
-  return {
-    type: "shape",
-    x: 0,
-    y: 0,
-    width: widthPt,
-    height: heightPt,
-    shapePath,
-  };
 }
 
 export function drawCutContourOnPage(

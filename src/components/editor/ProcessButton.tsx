@@ -3,6 +3,7 @@
 import { useEditor } from "@/lib/editor-context";
 import ProgressBar from "./ProgressBar";
 import ShareButton from "./ShareButton";
+import ImpositionPanel from "./ImpositionPanel";
 
 export default function ProcessButton() {
   const {
@@ -150,6 +151,9 @@ export default function ProcessButton() {
 
         {/* Share with client */}
         <ShareButton />
+
+        {/* Imposition - multiplicare pe coală */}
+        <ImpositionPanel />
 
         <button
           onClick={() => setPdfUrl(null)}

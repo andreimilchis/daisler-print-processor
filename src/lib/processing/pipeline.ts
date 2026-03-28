@@ -9,6 +9,7 @@ import { outpaintImage } from "@/lib/ai/outpaint";
 import { upscaleImage } from "@/lib/ai/upscale";
 import { removeBackground } from "@/lib/ai/remove-bg";
 import { generateCutContour } from "./cut-contour";
+import { addContourBleed } from "./contour-detect";
 
 interface PipelineParams {
   targetWidthMm: number;
@@ -83,8 +84,13 @@ export async function processFile(
     );
   }
 
-  // Step 7: Mirror bleed
-  img = await addMirrorBleed(img, params.bleedMm, params.dpi);
+  // Step 7: Bleed - contour bleed for shapes, mirror bleed for rectangles
+  if (params.cutContourEnabled && params.cutContourType === "shape" && params.bleedMm > 0) {
+    const bleedPx = mmToPx(params.bleedMm, params.dpi);
+    img = await addContourBleed(img, bleedPx);
+  } else {
+    img = await addMirrorBleed(img, params.bleedMm, params.dpi);
+  }
 
   // Step 8: Convert to CMYK JPEG
   const cmykJpeg = await convertToCmykJpeg(img);
@@ -144,7 +150,12 @@ export async function processMultipleFiles(
       img = await upscaleImage(img, params.aiUpscaleScale || 2);
     }
 
-    img = await addMirrorBleed(img, params.bleedMm, params.dpi);
+    if (params.cutContourEnabled && params.cutContourType === "shape" && params.bleedMm > 0) {
+      const bleedPx = mmToPx(params.bleedMm, params.dpi);
+      img = await addContourBleed(img, bleedPx);
+    } else {
+      img = await addMirrorBleed(img, params.bleedMm, params.dpi);
+    }
     img = await convertToCmykJpeg(img);
     processedImages.push(img);
   }
