@@ -104,8 +104,17 @@ export default function ImageCanvas() {
         {params.bleedMm > 0 && params.targetWidthMm > 0 && (
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute inset-0 border-2 border-dashed border-red-400 rounded-lg" />
-            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-red-500 bg-white px-2 rounded">
+            <span className="absolute -top-6 left-0 text-xs text-red-500 bg-white px-2 rounded">
               bleed {params.bleedMm}mm
+            </span>
+          </div>
+        )}
+        {/* Safe Margin overlay */}
+        {params.safeMarginMm > 0 && params.targetWidthMm > 0 && (
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-[8%] border-2 border-dashed border-blue-400 rounded-lg" />
+            <span className="absolute -top-6 right-0 text-xs text-blue-500 bg-white px-2 rounded">
+              safe {params.safeMarginMm}mm
             </span>
           </div>
         )}

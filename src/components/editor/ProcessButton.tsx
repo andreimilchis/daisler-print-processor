@@ -79,6 +79,8 @@ export default function ProcessButton() {
           cutContourType: params.cutContourType,
           cutContourOffsetMm: params.cutContourOffsetMm,
           removeBg: params.removeBg,
+          safeMarginMm: params.safeMarginMm,
+          showTrimMarks: params.showTrimMarks,
         })
       );
 

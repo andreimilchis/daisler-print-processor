@@ -15,6 +15,8 @@ interface PipelineParams {
   targetHeightMm: number;
   dpi: number;
   bleedMm: number;
+  safeMarginMm?: number;
+  showTrimMarks?: boolean;
   crop?: CropArea;
   enableAiFill?: boolean;
   aiOverlapPercent?: number;
@@ -87,14 +89,18 @@ export async function processFile(
   // Step 8: Convert to CMYK JPEG
   const cmykJpeg = await convertToCmykJpeg(img);
 
-  // Step 9: Generate PDF with trim marks + CutContour
+  // Step 9: Generate PDF (trim marks only if enabled)
   const pdf = await generatePdf(
     cmykJpeg,
     params.targetWidthMm,
     params.targetHeightMm,
     params.bleedMm,
     filename,
-    cutContourData
+    cutContourData,
+    {
+      showTrimMarks: params.showTrimMarks ?? false,
+      safeMarginMm: params.safeMarginMm,
+    }
   );
 
   return pdf;
@@ -164,7 +170,11 @@ export async function processMultipleFiles(
     params.targetHeightMm,
     params.bleedMm,
     filenames[0] || "document",
-    cutContourData
+    cutContourData,
+    {
+      showTrimMarks: params.showTrimMarks ?? false,
+      safeMarginMm: params.safeMarginMm,
+    }
   );
 
   return pdf;

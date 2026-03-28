@@ -30,8 +30,10 @@ export interface ProcessingParams {
   unit: Unit;
   dpi: number;
   bleedMm: number;
+  safeMarginMm: number;
   targetWidthMm: number;
   targetHeightMm: number;
+  showTrimMarks?: boolean;
   crop?: CropArea;
   presetId?: string;
   enableAiFill?: boolean;

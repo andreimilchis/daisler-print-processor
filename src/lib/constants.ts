@@ -15,6 +15,8 @@ export const DEFAULT_PARAMS = {
   unit: "mm" as const,
   dpi: 300,
   bleedMm: 3,
+  safeMarginMm: 3,
   targetWidthMm: 0,
   targetHeightMm: 0,
+  showTrimMarks: false,
 };

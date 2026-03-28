@@ -14,20 +14,28 @@ interface ContourPath {
   shapePath?: { x: number; y: number }[];
 }
 
+interface PdfOptions {
+  showTrimMarks?: boolean;
+  safeMarginMm?: number;
+}
+
 export async function generatePdf(
   imageBuffers: Buffer | Buffer[],
   widthMm: number,
   heightMm: number,
   bleedMm: number,
   filename: string,
-  cutContour?: ContourPath
+  cutContour?: ContourPath,
+  options?: PdfOptions
 ): Promise<Buffer> {
   const buffers = Array.isArray(imageBuffers) ? imageBuffers : [imageBuffers];
+  const showTrimMarks = options?.showTrimMarks ?? false;
 
   const totalWidthMm = widthMm + 2 * bleedMm;
   const totalHeightMm = heightMm + 2 * bleedMm;
 
-  const markMarginMm = bleedMm > 0 ? MARK_LENGTH_MM + MARK_OFFSET_MM : 0;
+  // Only add mark margin space if trim marks are enabled
+  const markMarginMm = (bleedMm > 0 && showTrimMarks) ? MARK_LENGTH_MM + MARK_OFFSET_MM : 0;
   const pageWidthPt = (totalWidthMm + 2 * markMarginMm) * MM_TO_POINTS;
   const pageHeightPt = (totalHeightMm + 2 * markMarginMm) * MM_TO_POINTS;
 
@@ -47,18 +55,18 @@ export async function generatePdf(
 
     page.drawImage(image, { x: imgX, y: imgY, width: imgW, height: imgH });
 
-    // Draw trim marks if there's bleed
-    if (bleedMm > 0) {
+    const bleedPt = bleedMm * MM_TO_POINTS;
+    const trimLeft = imgX + bleedPt;
+    const trimRight = imgX + imgW - bleedPt;
+    const trimBottom = imgY + bleedPt;
+    const trimTop = imgY + imgH - bleedPt;
+
+    // Draw trim marks only if explicitly enabled
+    if (bleedMm > 0 && showTrimMarks) {
       const markLen = MARK_LENGTH_MM * MM_TO_POINTS;
       const markOff = MARK_OFFSET_MM * MM_TO_POINTS;
-      const bleedPt = bleedMm * MM_TO_POINTS;
       const trimColor = rgb(0, 0, 0);
       const lineWidth = 0.5;
-
-      const trimLeft = imgX + bleedPt;
-      const trimRight = imgX + imgW - bleedPt;
-      const trimBottom = imgY + bleedPt;
-      const trimTop = imgY + imgH - bleedPt;
 
       // Top-left corner
       page.drawLine({ start: { x: trimLeft, y: trimTop + markOff }, end: { x: trimLeft, y: trimTop + markOff + markLen }, thickness: lineWidth, color: trimColor });
@@ -75,11 +83,11 @@ export async function generatePdf(
       // Bottom-right corner
       page.drawLine({ start: { x: trimRight, y: trimBottom - markOff - markLen }, end: { x: trimRight, y: trimBottom - markOff }, thickness: lineWidth, color: trimColor });
       page.drawLine({ start: { x: trimRight + markOff, y: trimBottom }, end: { x: trimRight + markOff + markLen, y: trimBottom }, thickness: lineWidth, color: trimColor });
+    }
 
-      // Draw CutContour if present
-      if (cutContour) {
-        drawCutContourOnPage(page, cutContour, trimLeft, trimBottom);
-      }
+    // Draw CutContour if present (only when explicitly enabled)
+    if (cutContour) {
+      drawCutContourOnPage(page, cutContour, trimLeft, trimBottom);
     }
   }
 

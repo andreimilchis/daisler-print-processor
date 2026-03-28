@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processFile } from "@/lib/processing/pipeline";
+import { processPdfInput } from "@/lib/processing/pdf-input";
 import crypto from "crypto";
 
 export const maxDuration = 120; // Allow longer for AI operations
@@ -70,7 +71,12 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const pdfBuffer = await processFile(buffer, params, file.name);
+
+    // Detect if input is PDF → use vector-preserving PDF processor
+    const isPdfInput = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const pdfBuffer = isPdfInput
+      ? await processPdfInput(buffer, params, file.name)
+      : await processFile(buffer, params, file.name);
 
     // Cache non-AI results
     if (!hasAi) {
